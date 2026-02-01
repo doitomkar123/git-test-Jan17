@@ -1,3 +1,3 @@
 def call(){
-    sh "${maven}/bin/mvn clean package"
+    sh "${maven}/bin/mvn clean install"
 }
