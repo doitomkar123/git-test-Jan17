@@ -1,0 +1,58 @@
+@Library('shared-lib@main') _
+pipeline {
+    agent {
+        label 'sshagent'
+    }
+    environment {
+        def maven = tool 'maven'
+        def sonarScanner = tool 'sonar-scanner'
+    }
+    parameters {
+      booleanParam defaultValue: true, name: 'RunSonar'
+      choice choices: ['Yes', 'No'], name: 'RunSonarChoice'
+    }
+    stages {
+        // stage('git checkout') {
+        //     steps {
+        //         cleanWs()
+        //         git branch: 'main', url: 'https://github.com/doitomkar123/java-hello-world.git'
+        //     }
+        // }
+        stage('Sonar Scan'){
+            when{
+                expression { params.RunSonar == true && params.RunSonarChoice == 'Yes' }
+            }
+            steps{
+                withSonarQubeEnv('sonarqube') {
+                    sh "${sonarScanner}/bin/sonar-scanner"
+                }
+            }
+        }
+        stage('Maven Build & test'){
+            steps{
+                // sh "${maven}/bin/mvn clean package"
+                mavenBuild()
+            }
+        }
+        stage('Deploy application'){
+            steps{
+                sh '''
+                export BUILD_ID=dontKillMe
+                export JENKINS_NODE_COOKIE=dontKillMe
+                bash run.sh
+                '''
+            }
+        }
+    }
+    post{
+        always{
+            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'target/site/jacoco/', reportFiles: 'index.html', reportName: 'Code Coverage Report', reportTitles: '', useWrapperFileDirectly: true])
+            junit 'target/surefire-reports/*.xml'
+            
+            mail bcc: '', body: """${JOB_NAME} #${BUILD_NUMBER} - ${currentBuild.currentResult}
+See logs ->
+${RUN_DISPLAY_URL}""", cc: '', from: '', replyTo: '', subject: "${JOB_NAME} - ${BUILD_NUMBER} - ${currentBuild.currentResult}", to: 'doitomkar123@gmail.com'
+        }
+    }
+}
+
