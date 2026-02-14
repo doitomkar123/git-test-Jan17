@@ -8,8 +8,7 @@ pipeline {
         def sonarScanner = tool 'sonar-scanner'
     }
     parameters {
-      booleanParam defaultValue: true, name: 'RunSonar'
-      choice choices: ['Yes', 'No'], name: 'RunSonarChoice'
+      booleanParam defaultValue: false, name: 'RunSonar'
     }
     stages {
         // stage('git checkout') {
