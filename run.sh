@@ -10,4 +10,3 @@ if nohup java -jar -Dserver.port=8081 target/java-demo-app-1.0.0.jar &
 then
   echo "Deployed New Application"
 fi
-
